@@ -26,3 +26,7 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Database exports
+server/data.sql
+server/schema.sql
