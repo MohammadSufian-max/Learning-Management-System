@@ -5,7 +5,6 @@ import {
   BookOpen,
   GraduationCap,
   Activity,
-  ArrowUpRight,
   ShieldCheck,
   UserRound,
   BookMarked,
@@ -132,8 +131,6 @@ function AdminDashboard() {
       textColor: "text-slate-700",
     },
   ];
-
-  const maxRoleCount = Math.max(totalStudents, totalInstructors, 1);
 
   return (
     <div className="min-h-full space-y-7 bg-[#faf9f5] p-5 sm:p-7 lg:p-8">

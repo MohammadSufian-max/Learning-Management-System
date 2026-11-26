@@ -43,21 +43,6 @@ function UnauthorizedPage() {
   );
 }
 
-function DashboardPlaceholder({ role }: { role: string }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#faf9f5]">
-      <div className="rounded-2xl border border-stone-200 bg-white p-10 text-center shadow-sm">
-        <h1 className="text-2xl font-bold capitalize text-emerald-900">
-          {role} Dashboard
-        </h1>
-        <p className="mt-2 text-slate-500">
-          Dashboard page will be implemented next.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function AppRoutes() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);

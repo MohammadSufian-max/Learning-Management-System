@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Clock3,
   ShieldCheck,
-  UserRound,
   CalendarDays,
   TrendingUp,
   Loader2,
@@ -105,8 +104,6 @@ function AdminReportsPage() {
     { label: "Instructors", value: instructors.length, color: "bg-amber-500" },
     { label: "Administrators", value: admins.length, color: "bg-slate-500" },
   ];
-
-  const maxRoleCount = Math.max(...roleStats.map((item) => item.value), 1);
 
   const recentEnrollments = [...enrollments]
     .sort(
