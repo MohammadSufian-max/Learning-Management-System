@@ -4,7 +4,6 @@ import { Lesson, LessonType } from "../entities/Lesson";
 import { CourseModule } from "../entities/CourseModule";
 import { verifyActiveEnrollment } from "./EnrollmentService";
 
-
 interface CreateLessonData {
   moduleId: number;
   lessonTitle: string;
@@ -161,32 +160,4 @@ export const getStudentLessonsByModule = async (
     where: { moduleId },
     order: { sequenceNumber: "ASC" },
   });
-};
-
-export const getStudentLessonFile = async (
-  filename: string,
-  studentId: number
-) => {
-  const lessonRepository = AppDataSource.getRepository(Lesson);
-
-  const lesson = await lessonRepository.findOne({
-    where: {
-      contentUrl: `/uploads/${filename}`,
-    },
-  });
-
-  if (!lesson) {
-    throw new Error("Lesson file not found");
-  }
-
-  const enrollment = await verifyActiveEnrollment(
-    studentId,
-    lesson.courseId
-  );
-
-  if (!enrollment) {
-    throw new Error("Active enrollment required");
-  }
-
-  return lesson;
 };

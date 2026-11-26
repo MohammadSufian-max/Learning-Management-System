@@ -1,9 +1,9 @@
+
 import { Router } from "express";
 import {
   addLesson,
   fetchLessons,
   fetchStudentLessons,
-  streamStudentLessonFile,
   editLesson,
   removeLesson,
 } from "../controllers/LessonController";
@@ -13,13 +13,6 @@ import { UserRole } from "../entities/User";
 import { upload } from "../config/upload";
 
 const router = Router();
-
-router.get(
-  "/student/file/:filename",
-  authMiddleware,
-  authorizeRoles(UserRole.STUDENT),
-  streamStudentLessonFile
-);
 
 router.post(
   "/",
@@ -47,6 +40,7 @@ router.put(
   "/:id",
   authMiddleware,
   authorizeRoles(UserRole.INSTRUCTOR),
+  upload.single("file"),
   editLesson
 );
 

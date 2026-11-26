@@ -8,10 +8,6 @@ import {
   deleteLesson,
 } from "../services/LessonService";
 import { LessonType } from "../entities/Lesson";
-import path from "path";
-import fs from "fs";
-import { getStudentLessonFile } from "../services/LessonService";
-
 
 export const addLesson = async (req: Request, res: Response) => {
   try {
@@ -207,35 +203,7 @@ export const editLesson = async (req: Request, res: Response) => {
 
     const uploadedFile = req.file;
 
-if (
-  (lessonType === LessonType.VIDEO || lessonType === LessonType.PDF) &&
-  !uploadedFile
-) {
-  return res.status(400).json({
-    success: false,
-    message: "Video or PDF file is required",
-  });
-}
-
-if (
-  uploadedFile &&
-  ((lessonType === LessonType.VIDEO &&
-    !uploadedFile.mimetype.startsWith("video/")) ||
-    (lessonType === LessonType.PDF &&
-      uploadedFile.mimetype !== "application/pdf") ||
-    lessonType === LessonType.TEXT)
-) {
-  return res.status(400).json({
-    success: false,
-    message: "Uploaded file does not match lesson type",
-  });
-}
-
-const finalContentUrl = uploadedFile
-  ? `/uploads/${uploadedFile.filename}`
-  : contentUrl;
-
-    if (Object.keys(req.body).length === 0) {
+    if (Object.keys(req.body).length === 0 && !uploadedFile) {
       return res.status(400).json({
         success: false,
         message: "No update data provided",
@@ -253,10 +221,27 @@ const finalContentUrl = uploadedFile
     }
 
     if (
+      uploadedFile &&
+      (
+        (lessonType === LessonType.VIDEO &&
+          !uploadedFile.mimetype.startsWith("video/")) ||
+        (lessonType === LessonType.PDF &&
+          uploadedFile.mimetype !== "application/pdf") ||
+        lessonType === LessonType.TEXT
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Uploaded file does not match lesson type",
+      });
+    }
+
+    if (
       (duration !== undefined &&
-        (!Number.isInteger(duration) || duration < 0)) ||
+        (!Number.isInteger(Number(duration)) || Number(duration) < 0)) ||
       (sequenceNumber !== undefined &&
-        (!Number.isInteger(sequenceNumber) || sequenceNumber <= 0))
+        (!Number.isInteger(Number(sequenceNumber)) ||
+          Number(sequenceNumber) <= 0))
     ) {
       return res.status(400).json({
         success: false,
@@ -264,14 +249,19 @@ const finalContentUrl = uploadedFile
       });
     }
 
+    const finalContentUrl = uploadedFile
+      ? `/uploads/${uploadedFile.filename}`
+      : contentUrl;
+
     const lesson = await updateLesson(id, req.user.id, {
       lessonTitle,
       lessonType,
-      contentUrl,
+      contentUrl: finalContentUrl,
       textContent,
       description,
-      duration,
-      sequenceNumber,
+      duration: duration !== undefined ? Number(duration) : undefined,
+      sequenceNumber:
+        sequenceNumber !== undefined ? Number(sequenceNumber) : undefined,
     });
 
     return res.status(200).json({
@@ -369,66 +359,6 @@ export const fetchStudentLessons = async (
 
     const status =
       message === "Module not found" ? 404 :
-      message === "Active enrollment required" ? 403 : 500;
-
-    return res.status(status).json({
-      success: false,
-      message,
-    });
-  }
-};
-
-export const streamStudentLessonFile = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
-    }
-
-    const filename = req.params.filename;
-
-if (
-  typeof filename !== "string" ||
-  !filename ||
-  path.basename(filename) !== filename
-) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid filename",
-      });
-    }
-
-    const lesson = await getStudentLessonFile(
-      filename,
-      req.user.id
-    );
-
-    const filePath = path.join(
-      process.cwd(),
-      "src",
-      "uploads",
-      filename
-    );
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "Lesson file not found",
-      });
-    }
-
-    return res.sendFile(filePath);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "File access failed";
-
-    const status =
-      message === "Lesson file not found" ? 404 :
       message === "Active enrollment required" ? 403 : 500;
 
     return res.status(status).json({
