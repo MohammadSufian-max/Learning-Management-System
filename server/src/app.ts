@@ -20,11 +20,6 @@ import quizAttemptRoutes from "./routes/quizAttemptRoutes";
 const app = express();
 
 app.use(
-  "/uploads",
-  express.static(path.resolve(process.cwd(), "public", "uploads"))
-);
-
-app.use(
   cors({
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(",").map((url) => url.trim())
