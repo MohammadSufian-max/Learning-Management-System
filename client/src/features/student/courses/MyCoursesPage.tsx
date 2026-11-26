@@ -413,7 +413,7 @@ function MyCoursesPage() {
                                       <>
 
                                         <a
-                                          href={`http://localhost:5000${lesson.contentUrl}`}
+                                         href={`${import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"}${lesson.contentUrl}`}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="inline-flex items-center gap-2 font-medium text-emerald-700 underline"
