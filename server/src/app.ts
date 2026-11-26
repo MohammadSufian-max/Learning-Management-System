@@ -19,6 +19,18 @@ import quizAttemptRoutes from "./routes/quizAttemptRoutes";
 
 const app = express();
 
+// New public uploads folder
+app.use(
+  "/uploads",
+  express.static(path.resolve(process.cwd(), "public", "uploads"))
+);
+
+// Old uploads folder - fallback for existing files
+app.use(
+  "/uploads",
+  express.static(path.resolve(process.cwd(), "src", "uploads"))
+);
+
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN
@@ -31,10 +43,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  "/uploads",
-  express.static(path.join(process.cwd(), "src", "uploads"))
-);
+
 
 app.get("/", (_req, res) => {
   res.status(200).json({
