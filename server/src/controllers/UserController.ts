@@ -11,8 +11,15 @@ import { UserRole, UserStatus } from "../entities/User";
 
 export const addUser = async (req: Request, res: Response) => {
   try {
-    const { fullName, email, mobileNumber, password, role, profileImage } =
-      req.body;
+    const {
+  fullName,
+  email,
+  mobileNumber,
+  password,
+  role,
+  profileImage,
+  roleIds,
+} = req.body;
 
     if (!fullName || !email || !mobileNumber || !password || !role) {
       return res.status(400).json({
@@ -20,6 +27,19 @@ export const addUser = async (req: Request, res: Response) => {
         message: "All required fields must be provided",
       });
     }
+
+    if (
+  roleIds !== undefined &&
+  (!Array.isArray(roleIds) ||
+    roleIds.some(
+      (id: unknown) => !Number.isInteger(id) || Number(id) <= 0
+    ))
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid role IDs",
+  });
+}
 
     if (!Object.values(UserRole).includes(role)) {
       return res.status(400).json({
@@ -29,14 +49,14 @@ export const addUser = async (req: Request, res: Response) => {
     }
 
     const user = await createUser({
-      fullName,
-      email,
-      mobileNumber,
-      password,
-      role,
-      profileImage,
-    });
-
+  fullName,
+  email,
+  mobileNumber,
+  password,
+  role,
+  profileImage,
+  roleIds,
+});
     const { password: _, ...safeUser } = user;
 
     return res.status(201).json({
@@ -58,14 +78,17 @@ export const fetchAllUsers = async (req: Request, res: Response) => {
   try {
     const { search, role, status } = req.query;
 
-    if (role && !Object.values(UserRole).includes(role as UserRole)) {
+    if (role && typeof role !== "string") {
       return res.status(400).json({
         success: false,
         message: "Invalid user role",
       });
     }
 
-    if (status && !Object.values(UserStatus).includes(status as UserStatus)) {
+    if (
+      status &&
+      !Object.values(UserStatus).includes(status as UserStatus)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid user status",
@@ -74,7 +97,7 @@ export const fetchAllUsers = async (req: Request, res: Response) => {
 
     const users = await getAllUsers({
       search: typeof search === "string" ? search.trim() : undefined,
-      role: role as UserRole | undefined,
+      role: typeof role === "string" ? role.trim() : undefined,
       status: status as UserStatus | undefined,
     });
 
@@ -92,7 +115,6 @@ export const fetchAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-
 export const editUser = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -104,7 +126,14 @@ export const editUser = async (req: Request, res: Response) => {
       });
     }
 
-    const { fullName, email, mobileNumber, role, profileImage } = req.body;
+    const {
+  fullName,
+  email,
+  mobileNumber,
+  role,
+  profileImage,
+  roleIds,
+} = req.body;
 
     if (role && !Object.values(UserRole).includes(role)) {
       return res.status(400).json({
@@ -114,12 +143,13 @@ export const editUser = async (req: Request, res: Response) => {
     }
 
     const user = await updateUser(id, {
-      fullName,
-      email,
-      mobileNumber,
-      role,
-      profileImage,
-    });
+  fullName,
+  email,
+  mobileNumber,
+  role,
+  profileImage,
+  roleIds,
+});
 
     const { password: _, ...safeUser } = user;
 

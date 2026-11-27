@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import {
   addModule,
@@ -8,17 +9,20 @@ import {
 } from "../controllers/CourseModuleController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
 
+// Create module
 router.post(
   "/",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("course_modules.create"),
   addModule
 );
 
+// Student modules - preserve existing student access
 router.get(
   "/student/:courseId",
   authMiddleware,
@@ -26,24 +30,27 @@ router.get(
   fetchStudentModules
 );
 
+// Fetch modules
 router.get(
   "/:courseId",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("course_modules.view"),
   fetchModules
 );
 
+// Edit module
 router.put(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("course_modules.edit"),
   editModule
 );
 
+// Delete module
 router.delete(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("course_modules.delete"),
   removeModule
 );
 

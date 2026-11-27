@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -15,6 +14,7 @@ import enrollmentRoutes from "./routes/enrollmentRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import questionRoutes from "./routes/questionRoutes";
 import quizAttemptRoutes from "./routes/quizAttemptRoutes";
+import roleRoutes from "./routes/roleRoutes";
 
 
 const app = express();
@@ -78,6 +78,7 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/quiz-attempts", quizAttemptRoutes);
+app.use("/api/roles", roleRoutes);
 
 app.use((err: any, req: any, res: any, next: any) => {
   if (err instanceof Error && err.message === "Only video and PDF files are allowed") {

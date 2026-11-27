@@ -20,6 +20,11 @@ import { useAuthStore } from "../../store/authStore";
 const navigation = [
   { label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { label: "User Management", path: "/admin/users", icon: Users },
+  {
+  label: "Roles & Permissions",
+  path: "/admin/roles",
+  icon: ShieldCheck,
+},
   { label: "All Courses", path: "/admin/courses", icon: BookOpen },
   { label: "Enrollments", path: "/admin/enrollments", icon: EnrollmentIcon },
   { label: "Reports / Activity", path: "/admin/reports", icon: ChartNoAxesCombined },

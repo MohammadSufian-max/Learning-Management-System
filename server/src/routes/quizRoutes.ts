@@ -10,11 +10,12 @@ import {
 import { fetchStudentQuizzes } from "../controllers/StudentQuizController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
-
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
 
+// Student quizzes - preserve existing access
 router.get(
   "/student/my",
   authMiddleware,
@@ -22,12 +23,44 @@ router.get(
   fetchStudentQuizzes
 );
 
-router.use(authMiddleware, authorizeRoles(UserRole.INSTRUCTOR));
+// Create quiz
+router.post(
+  "/",
+  authMiddleware,
+  authorizePermissions("quizzes.create"),
+  addQuiz
+);
 
-router.post("/", addQuiz);
-router.get("/course/:courseId", fetchQuizzes);
-router.put("/:id", editQuiz);
-router.patch("/:id/status", changeQuizStatus);
-router.delete("/:id", removeQuiz);
+// Fetch quizzes
+router.get(
+  "/course/:courseId",
+  authMiddleware,
+  authorizePermissions("quizzes.view"),
+  fetchQuizzes
+);
+
+// Edit quiz
+router.put(
+  "/:id",
+  authMiddleware,
+  authorizePermissions("quizzes.edit"),
+  editQuiz
+);
+
+// Change quiz status
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  authorizePermissions("quizzes.edit"),
+  changeQuizStatus
+);
+
+// Delete quiz
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorizePermissions("quizzes.delete"),
+  removeQuiz
+);
 
 export default router;

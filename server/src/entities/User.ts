@@ -7,6 +7,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
+import { ManyToMany, JoinTable } from "typeorm";
+import { Role } from "./Role";
+
 export enum UserRole {
   ADMIN = "admin",
   INSTRUCTOR = "instructor",
@@ -56,6 +59,14 @@ export class User {
     default: UserRole.STUDENT,
   })
   role!: UserRole;
+
+  @ManyToMany(() => Role, (role) => role.users)
+@JoinTable({
+  name: "user_roles",
+  joinColumn: { name: "user_id", referencedColumnName: "id" },
+  inverseJoinColumn: { name: "role_id", referencedColumnName: "id" },
+})
+roles!: Role[];
 
   @Column({
     type: "enum",

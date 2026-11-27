@@ -1,6 +1,43 @@
+
 import bcrypt from "bcrypt";
+import { In } from "typeorm";
 import { AppDataSource } from "../config/database";
 import { User, UserRole, UserStatus } from "../entities/User";
+import { Role } from "../entities/Role";
+
+// Resolve role IDs and always include the user's primary system role.
+const resolveUserRoles = async (
+  roleIds: number[],
+  primaryRole: UserRole
+) => {
+  const roleRepository = AppDataSource.getRepository(Role);
+
+  const uniqueIds = [...new Set(roleIds)];
+
+  const assignedRoles = uniqueIds.length
+    ? await roleRepository.find({
+        where: { id: In(uniqueIds) },
+      })
+    : [];
+
+  if (assignedRoles.length !== uniqueIds.length) {
+    throw new Error("One or more role IDs are invalid");
+  }
+
+  const primarySystemRole = await roleRepository.findOne({
+    where: { name: primaryRole },
+  });
+
+  if (!primarySystemRole) {
+    throw new Error("Primary system role not found");
+  }
+
+  if (!assignedRoles.some((role) => role.id === primarySystemRole.id)) {
+    assignedRoles.push(primarySystemRole);
+  }
+
+  return assignedRoles;
+};
 
 export const createUser = async (data: {
   fullName: string;
@@ -9,6 +46,7 @@ export const createUser = async (data: {
   password: string;
   role: UserRole;
   profileImage?: string;
+  roleIds?: number[];
 }) => {
   const userRepository = AppDataSource.getRepository(User);
 
@@ -22,25 +60,35 @@ export const createUser = async (data: {
 
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
+  const roles = await resolveUserRoles(
+    data.roleIds ?? [],
+    data.role
+  );
+
   const user = userRepository.create({
-    ...data,
+    fullName: data.fullName,
+    email: data.email,
+    mobileNumber: data.mobileNumber,
     password: hashedPassword,
+    role: data.role,
+    profileImage: data.profileImage,
     status: UserStatus.ACTIVE,
+    roles,
   });
 
   return await userRepository.save(user);
 };
 
-
 export const getAllUsers = async (filters?: {
   search?: string;
-  role?: UserRole;
+  role?: string;
   status?: UserStatus;
 }) => {
   const userRepository = AppDataSource.getRepository(User);
 
   const query = userRepository
     .createQueryBuilder("user")
+    .leftJoinAndSelect("user.roles", "role")
     .orderBy("user.createdAt", "DESC");
 
   if (filters?.search) {
@@ -51,7 +99,7 @@ export const getAllUsers = async (filters?: {
   }
 
   if (filters?.role) {
-    query.andWhere("user.role = :role", {
+    query.andWhere("role.name = :role", {
       role: filters.role,
     });
   }
@@ -65,7 +113,6 @@ export const getAllUsers = async (filters?: {
   return await query.getMany();
 };
 
-
 export const updateUser = async (
   id: number,
   data: {
@@ -74,11 +121,17 @@ export const updateUser = async (
     mobileNumber?: string;
     role?: UserRole;
     profileImage?: string | null;
+    roleIds?: number[];
   }
 ) => {
   const userRepository = AppDataSource.getRepository(User);
 
-  const user = await userRepository.findOneBy({ id });
+  const user = await userRepository.findOne({
+    where: { id },
+    relations: {
+      roles: true,
+    },
+  });
 
   if (!user) {
     throw new Error("User not found");
@@ -94,7 +147,25 @@ export const updateUser = async (
     }
   }
 
-  Object.assign(user, data);
+  const { roleIds, ...userData } = data;
+
+  const primaryRole = data.role ?? user.role;
+
+  if (roleIds !== undefined) {
+    user.roles = await resolveUserRoles(roleIds, primaryRole);
+  } else if (data.role !== undefined && data.role !== user.role) {
+    // Preserve additional roles while replacing the previous primary system role.
+    const remainingRoles = (user.roles ?? []).filter(
+      (role) => role.name !== user.role
+    );
+
+    user.roles = await resolveUserRoles(
+      remainingRoles.map((role) => role.id),
+      primaryRole
+    );
+  }
+
+  Object.assign(user, userData);
 
   return await userRepository.save(user);
 };

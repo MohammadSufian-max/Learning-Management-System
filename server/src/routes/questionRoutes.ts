@@ -12,6 +12,7 @@ import {
   authMiddleware,
   authorizeRoles,
 } from "../middlewares/authMiddleware";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
@@ -24,16 +25,44 @@ router.get(
   fetchStudentQuestions
 );
 
-// Instructor-only question management.
-router.use(
+// Create question
+router.post(
+  "/quiz/:quizId",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR)
+  authorizePermissions("questions.create"),
+  addQuestion
 );
 
-router.post("/quiz/:quizId", addQuestion);
-router.get("/quiz/:quizId", fetchQuestions);
-router.patch("/quiz/:quizId/reorder", changeQuestionOrder);
-router.put("/:id", editQuestion);
-router.delete("/:id", removeQuestion);
+// Fetch questions
+router.get(
+  "/quiz/:quizId",
+  authMiddleware,
+  authorizePermissions("questions.view"),
+  fetchQuestions
+);
+
+// Reorder questions
+router.patch(
+  "/quiz/:quizId/reorder",
+  authMiddleware,
+  authorizePermissions("questions.edit"),
+  changeQuestionOrder
+);
+
+// Edit question
+router.put(
+  "/:id",
+  authMiddleware,
+  authorizePermissions("questions.edit"),
+  editQuestion
+);
+
+// Delete question
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorizePermissions("questions.delete"),
+  removeQuestion
+);
 
 export default router;

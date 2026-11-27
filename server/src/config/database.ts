@@ -14,6 +14,8 @@ import { Quiz } from "../entities/Quiz";
 import { Question } from "../entities/Question";
 import { QuizAttempt } from "../entities/QuizAttempt";
 import { QuizAnswer } from "../entities/QuizAnswer";
+import { Role } from "../entities/Role";
+import { Permission } from "../entities/Permission";
 
 dotenv.config();
 
@@ -34,17 +36,19 @@ export const AppDataSource = new DataSource({
   },
 
   entities: [
-    User,
-    Course,
-    CourseModule,
-    Lesson,
-    Enrollment,
-    LessonProgress,
-    Quiz,
-    Question,
-    QuizAttempt,
-    QuizAnswer,
-  ],
+  User,
+  Role,
+  Permission,
+  Course,
+  CourseModule,
+  Lesson,
+  Enrollment,
+  LessonProgress,
+  Quiz,
+  Question,
+  QuizAttempt,
+  QuizAnswer,
+],
 
   synchronize: false,
   logging: true,

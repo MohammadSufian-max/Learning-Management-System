@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import {
   addCourse,
@@ -9,17 +10,20 @@ import {
 } from "../controllers/CourseController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
 
+// Create course
 router.post(
   "/",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN, UserRole.INSTRUCTOR),
+  authorizePermissions("courses.create"),
   addCourse
 );
 
+// Published courses - preserve existing student-only access
 router.get(
   "/published",
   authMiddleware,
@@ -27,31 +31,35 @@ router.get(
   fetchPublishedCourses
 );
 
+// View courses
 router.get(
   "/",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN, UserRole.INSTRUCTOR),
+  authorizePermissions("courses.view"),
   fetchCourses
 );
 
+// Edit course
 router.put(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN, UserRole.INSTRUCTOR),
+  authorizePermissions("courses.edit"),
   editCourse
 );
 
+// Change course status
 router.patch(
   "/:id/status",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN, UserRole.INSTRUCTOR),
+  authorizePermissions("courses.edit"),
   changeCourseStatus
 );
 
+// Delete course
 router.delete(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN, UserRole.INSTRUCTOR),
+  authorizePermissions("courses.delete"),
   removeCourse
 );
 

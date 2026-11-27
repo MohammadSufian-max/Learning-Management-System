@@ -27,6 +27,7 @@ import AdminCreateCoursePage from "../features/admin/courses/AdminCreateCoursePa
 import AdminEditCoursePage from "../features/admin/courses/AdminEditCoursePage";
 import AdminEnrollmentsPage from "../features/admin/enrollments/AdminEnrollmentsPage";
 import AdminReportsPage from "../features/admin/reports/AdminReportsPage";
+import RolesPage from "../features/admin/roles/RolesPage";
 
 function UnauthorizedPage() {
   return (
@@ -88,6 +89,7 @@ function AppRoutes() {
             <Route path="courses/edit/:id" element={<AdminEditCoursePage />} />
             <Route path="enrollments" element={<AdminEnrollmentsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="roles" element={<RolesPage />} />
           </Route>
         </Route>
 

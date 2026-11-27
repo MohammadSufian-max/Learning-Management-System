@@ -7,6 +7,7 @@ import {
 } from "../controllers/EnrollmentController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
@@ -23,7 +24,7 @@ router.post(
 router.get(
   "/",
   authMiddleware,
-  authorizeRoles(UserRole.ADMIN),
+  authorizePermissions("enrollments.view"),
   fetchAllEnrollments
 );
 

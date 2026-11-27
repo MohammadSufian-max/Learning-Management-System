@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import {
   completeLesson,
@@ -5,10 +6,12 @@ import {
 } from "../controllers/LessonProgressController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 
 const router = Router();
 
+// Student: Complete lesson - preserve existing access
 router.patch(
   "/lesson/:lessonId/complete",
   authMiddleware,
@@ -16,6 +19,7 @@ router.patch(
   completeLesson
 );
 
+// Student: View own course progress
 router.get(
   "/course/:courseId",
   authMiddleware,

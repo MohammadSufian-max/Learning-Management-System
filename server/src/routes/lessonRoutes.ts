@@ -9,19 +9,22 @@ import {
 } from "../controllers/LessonController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
+import { authorizePermissions } from "../middlewares/authorizePermissions";
 import { UserRole } from "../entities/User";
 import { upload } from "../config/upload";
 
 const router = Router();
 
+// Create lesson
 router.post(
   "/",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("lessons.create"),
   upload.single("file"),
   addLesson
 );
 
+// Student lessons - preserve existing student access
 router.get(
   "/student/module/:moduleId",
   authMiddleware,
@@ -29,25 +32,28 @@ router.get(
   fetchStudentLessons
 );
 
+// Fetch lessons
 router.get(
   "/module/:moduleId",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("lessons.view"),
   fetchLessons
 );
 
+// Edit lesson
 router.put(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("lessons.edit"),
   upload.single("file"),
   editLesson
 );
 
+// Delete lesson
 router.delete(
   "/:id",
   authMiddleware,
-  authorizeRoles(UserRole.INSTRUCTOR),
+  authorizePermissions("lessons.delete"),
   removeLesson
 );
 

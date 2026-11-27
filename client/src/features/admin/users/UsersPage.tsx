@@ -1,7 +1,13 @@
-
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Pencil, UserX, UserCheck, RefreshCw } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Pencil,
+  UserX,
+  UserCheck,
+  RefreshCw,
+} from "lucide-react";
 import api from "../../../api/axios";
 import UserForm from "./UserForm";
 
@@ -14,6 +20,16 @@ interface User {
   status: "active" | "inactive";
   profileImage: string | null;
   createdAt: string;
+  roles?: {
+  id: number;
+  name: string;
+}[];
+}
+
+interface Role {
+  id: number;
+  name: string;
+  isSystem: boolean;
 }
 
 export type UserFormData = {
@@ -23,10 +39,25 @@ export type UserFormData = {
   password?: string;
   role: "admin" | "instructor" | "student";
   profileImage?: string | null;
+  roleIds?: number[];
 };
 
 function UsersPage() {
   const queryClient = useQueryClient();
+
+  const { data: availableRoles = [] } = useQuery<Role[]>({
+  queryKey: ["admin-roles"],
+  queryFn: async () => {
+    const response = await api.get("/roles");
+
+    return (
+      response.data?.roles ??
+      response.data?.data?.roles ??
+      response.data?.data ??
+      response.data
+    );
+  },
+});
 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
@@ -34,7 +65,12 @@ function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const { data: users = [], isLoading, isError, refetch } = useQuery<User[]>({
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<User[]>({
     queryKey: ["admin-users", search, role, status],
     queryFn: async () => {
       const params: Record<string, string> = {};
@@ -79,11 +115,11 @@ function UsersPage() {
   });
 
   const activateMutation = useMutation({
-  mutationFn: (id: number) => api.patch(`/users/${id}/activate`),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-  },
-});
+    mutationFn: (id: number) => api.patch(`/users/${id}/activate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
 
   const handleSubmit = (data: UserFormData) => {
     if (editingUser) {
@@ -110,9 +146,7 @@ function UsersPage() {
 
   const handleDeactivate = (user: User) => {
     if (
-      window.confirm(
-        `Are you sure you want to deactivate ${user.fullName}?`
-      )
+      window.confirm(`Are you sure you want to deactivate ${user.fullName}?`)
     ) {
       deactivateMutation.mutate(user.id);
     }
@@ -123,9 +157,11 @@ function UsersPage() {
 
   const getErrorMessage = (error: unknown) => {
     if (error && typeof error === "object" && "response" in error) {
-      const response = (error as {
-        response?: { data?: { message?: string } };
-      }).response;
+      const response = (
+        error as {
+          response?: { data?: { message?: string } };
+        }
+      ).response;
       return response?.data?.message || "Something went wrong.";
     }
     return error instanceof Error ? error.message : "Something went wrong.";
@@ -135,9 +171,7 @@ function UsersPage() {
     <div className="space-y-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            User Management
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
           <p className="mt-1 text-sm text-slate-500">
             Create and manage administrators, instructors and students.
           </p>
@@ -189,15 +223,18 @@ function UsersPage() {
           </div>
 
           <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="instructor">Instructor</option>
-            <option value="student">Student</option>
-          </select>
+  value={role}
+  onChange={(e) => setRole(e.target.value)}
+  className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+>
+  <option value="all">All Roles</option>
+
+  {availableRoles.map((item) => (
+    <option key={item.id} value={item.name}>
+      {item.name.replace(/_/g, " ")}
+    </option>
+  ))}
+</select>
 
           <select
             value={status}
@@ -272,10 +309,20 @@ function UsersPage() {
                       {user.mobileNumber}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="capitalize text-sm text-slate-700">
-                        {user.role}
-                      </span>
-                    </td>
+  <div className="flex flex-wrap gap-1.5">
+    {(user.roles?.length
+      ? user.roles
+      : [{ id: 0, name: user.role }]
+    ).map((assignedRole) => (
+      <span
+        key={assignedRole.id}
+        className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium capitalize text-emerald-800"
+      >
+        {assignedRole.name.replace(/_/g, " ")}
+      </span>
+    ))}
+  </div>
+</td>
                     <td className="px-4 py-4">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -307,15 +354,15 @@ function UsersPage() {
                           </button>
                         )}
                         {user.status === "inactive" && (
-  <button
-    onClick={() => activateMutation.mutate(user.id)}
-    disabled={activateMutation.isPending}
-    className="text-green-600 hover:text-green-700"
-    title="Activate User"
-  >
-    <UserCheck size={18} />
-  </button>
-)}
+                          <button
+                            onClick={() => activateMutation.mutate(user.id)}
+                            disabled={activateMutation.isPending}
+                            className="text-green-600 hover:text-green-700"
+                            title="Activate User"
+                          >
+                            <UserCheck size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -1,7 +1,13 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { UserFormData } from "./UsersPage";
+import api from "../../../api/axios";
+
+interface AssignedRole {
+  id: number;
+  name: string;
+}
 
 interface User {
   id: number;
@@ -11,6 +17,15 @@ interface User {
   role: "admin" | "instructor" | "student";
   status: "active" | "inactive";
   profileImage: string | null;
+  roles?: AssignedRole[];
+}
+
+interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  isSystem: boolean;
+  permissions: { id: number; name: string }[];
 }
 
 interface UserFormProps {
@@ -26,10 +41,16 @@ function UserForm({
   onClose,
   onSubmit,
 }: UserFormProps) {
+  const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [rolesError, setRolesError] = useState("");
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<UserFormData>({
     defaultValues: {
@@ -38,8 +59,43 @@ function UserForm({
       mobileNumber: "",
       password: "",
       role: "student",
+      roleIds: [],
     },
   });
+
+  const primaryRole = watch("role");
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setRolesLoading(true);
+        setRolesError("");
+
+        const response = await api.get("/roles");
+        const data =
+          response.data?.roles ??
+          response.data?.data?.roles ??
+          response.data?.data ??
+          response.data;
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid roles response");
+        }
+
+        setAvailableRoles(data);
+      } catch (error: any) {
+        setRolesError(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to load roles."
+        );
+      } finally {
+        setRolesLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   useEffect(() => {
     reset({
@@ -49,8 +105,50 @@ function UserForm({
       password: "",
       role: user?.role ?? "student",
       profileImage: user?.profileImage ?? null,
+      roleIds: user?.roles?.map((role) => role.id) ?? [],
     });
   }, [user, reset]);
+
+  useEffect(() => {
+    if (rolesLoading || availableRoles.length === 0) return;
+
+    const primarySystemRole = availableRoles.find(
+      (role) => role.isSystem && role.name === primaryRole
+    );
+
+    if (user) {
+      const existingRoleIds =
+        user.roles?.map((role) => role.id) ?? [];
+
+      if (user.roles) {
+        setSelectedRoleIds(existingRoleIds);
+      } else {
+        setSelectedRoleIds(
+          primarySystemRole ? [primarySystemRole.id] : []
+        );
+      }
+    } else {
+      setSelectedRoleIds(
+        primarySystemRole ? [primarySystemRole.id] : []
+      );
+    }
+  }, [user, availableRoles, rolesLoading, primaryRole]);
+
+  const toggleRole = (roleId: number) => {
+    const selectedRole = availableRoles.find(
+      (role) => role.id === roleId
+    );
+
+    if (selectedRole?.isSystem && selectedRole.name === primaryRole) {
+      return;
+    }
+
+    setSelectedRoleIds((current) =>
+      current.includes(roleId)
+        ? current.filter((id) => id !== roleId)
+        : [...current, roleId]
+    );
+  };
 
   const submitForm = (data: UserFormData) => {
     const payload = { ...data };
@@ -58,6 +156,18 @@ function UserForm({
     if (!payload.password) {
       delete payload.password;
     }
+
+    const primarySystemRole = availableRoles.find(
+      (role) => role.isSystem && role.name === data.role
+    );
+
+    const roleIds = [...selectedRoleIds];
+
+    if (primarySystemRole && !roleIds.includes(primarySystemRole.id)) {
+      roleIds.push(primarySystemRole.id);
+    }
+
+    payload.roleIds = roleIds;
 
     onSubmit(payload);
   };
@@ -75,7 +185,7 @@ function UserForm({
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {user
-                ? "Update user information."
+                ? "Update user information and assigned roles."
                 : "Enter details to create a new user."}
             </p>
           </div>
@@ -83,13 +193,17 @@ function UserForm({
           <button
             type="button"
             onClick={onClose}
+            disabled={isSaving}
             className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100"
           >
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(submitForm)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(submitForm)}
+          className="space-y-4"
+        >
           <div>
             <label className="text-sm font-medium text-slate-700">
               Full Name *
@@ -184,7 +298,7 @@ function UserForm({
 
           <div>
             <label className="text-sm font-medium text-slate-700">
-              Role *
+              Primary Role *
             </label>
             <select
               {...register("role", { required: "Role is required" })}
@@ -194,6 +308,65 @@ function UserForm({
               <option value="instructor">Instructor</option>
               <option value="admin">Admin</option>
             </select>
+            <p className="mt-1 text-xs text-slate-500">
+              The primary system role is always assigned to the user.
+            </p>
+          </div>
+
+          <div>
+            <div className="mb-2">
+              <label className="text-sm font-semibold text-slate-700">
+                Additional Roles
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Select other system or custom roles for this user.
+              </p>
+            </div>
+
+            {rolesLoading ? (
+              <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                Loading available roles...
+              </p>
+            ) : rolesError ? (
+              <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {rolesError}
+              </p>
+            ) : (
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3">
+                {availableRoles.map((role) => {
+                  const isPrimary =
+                    role.isSystem && role.name === primaryRole;
+
+                  return (
+                    <label
+                      key={role.id}
+                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg p-2 hover:bg-slate-50"
+                    >
+                      <div>
+                        <p className="text-sm font-medium capitalize text-slate-800">
+                          {role.name.replace(/_/g, " ")}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {role.isSystem ? "System Role" : "Custom Role"}
+                        </p>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        checked={selectedRoleIds.includes(role.id)}
+                        disabled={isPrimary}
+                        onChange={() => toggleRole(role.id)}
+                        className="h-4 w-4 accent-emerald-700 disabled:cursor-not-allowed"
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="mt-2 text-xs text-slate-500">
+              {selectedRoleIds.length} roles selected, including the primary role.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
@@ -208,7 +381,7 @@ function UserForm({
 
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || rolesLoading || !!rolesError}
               className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
             >
               {isSaving
