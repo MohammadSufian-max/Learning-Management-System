@@ -13,6 +13,7 @@ import { Course } from "./Course";
 export enum EnrollmentStatus {
   ACTIVE = "active",
   COMPLETED = "completed",
+  CANCELLED = "cancelled",
 }
 
 @Entity("enrollments")

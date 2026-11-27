@@ -4,6 +4,7 @@ import {
   createEnrollment,
   fetchMyEnrollments,
   fetchAllEnrollments,
+  cancelStudentEnrollment,
 } from "../controllers/EnrollmentController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
@@ -34,6 +35,14 @@ router.get(
   authMiddleware,
   authorizeRoles(UserRole.STUDENT),
   fetchMyEnrollments
+);
+
+// Admin: Cancel student enrollment
+router.patch(
+  "/:id/cancel",
+  authMiddleware,
+  authorizePermissions("enrollments.manage"),
+  cancelStudentEnrollment
 );
 
 export default router;

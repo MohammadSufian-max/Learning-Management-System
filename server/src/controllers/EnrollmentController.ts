@@ -4,6 +4,7 @@ import {
   enrollStudent,
   getMyEnrollments,
   getAllEnrollments,
+  cancelEnrollment,
 } from "../services/EnrollmentService";
 
 export const createEnrollment = async (
@@ -103,6 +104,43 @@ export const fetchAllEnrollments = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch all enrollments",
+    });
+  }
+};
+
+
+export const cancelStudentEnrollment = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const enrollmentId = Number(req.params.id);
+
+    if (!Number.isInteger(enrollmentId) || enrollmentId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid enrollment ID",
+      });
+    }
+
+    const enrollment = await cancelEnrollment(enrollmentId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Enrollment cancelled successfully",
+      data: enrollment,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Cancellation failed";
+
+    const status =
+      message === "Enrollment not found" ? 404 :
+      message === "Only active enrollments can be cancelled" ? 409 : 500;
+
+    return res.status(status).json({
+      success: false,
+      message,
     });
   }
 };

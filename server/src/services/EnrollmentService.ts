@@ -3,6 +3,30 @@ import { AppDataSource } from "../config/database";
 import { Enrollment, EnrollmentStatus } from "../entities/Enrollment";
 import { Course, CourseStatus } from "../entities/Course";
 
+export const cancelEnrollment = async (enrollmentId: number) => {
+  const enrollmentRepository = AppDataSource.getRepository(Enrollment);
+
+  const enrollment = await enrollmentRepository.findOne({
+    where: { id: enrollmentId },
+    relations: {
+      student: true,
+      course: true,
+    },
+  });
+
+  if (!enrollment) {
+    throw new Error("Enrollment not found");
+  }
+
+  if (enrollment.status !== EnrollmentStatus.ACTIVE) {
+    throw new Error("Only active enrollments can be cancelled");
+  }
+
+  enrollment.status = EnrollmentStatus.CANCELLED;
+
+  return await enrollmentRepository.save(enrollment);
+};
+
 export const enrollStudent = async (
   studentId: number,
   courseId: number
