@@ -28,6 +28,7 @@ import AdminEditCoursePage from "../features/admin/courses/AdminEditCoursePage";
 import AdminEnrollmentsPage from "../features/admin/enrollments/AdminEnrollmentsPage";
 import AdminReportsPage from "../features/admin/reports/AdminReportsPage";
 import RolesPage from "../features/admin/roles/RolesPage";
+import ProfilePage from "../features/profile/ProfilePage";
 
 function UnauthorizedPage() {
   return (
@@ -90,6 +91,7 @@ function AppRoutes() {
             <Route path="enrollments" element={<AdminEnrollmentsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="roles" element={<RolesPage />} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
         </Route>
 
@@ -102,7 +104,7 @@ function AppRoutes() {
             <Route path="courses/create" element={<CreateCoursePage />} />
             <Route path="modules" element={<ModulesPage />} />
             <Route path="quizzes" element={<QuizzesPage />} />
-
+<Route path="profile" element={<ProfilePage />} />
             <Route path="questions" element={<QuestionsPage />} />
             <Route path="results" element={<InstructorResultsPage />} />
           </Route>
@@ -118,7 +120,7 @@ function AppRoutes() {
             <Route path="progress" element={<LearningProgressPage />} />
             <Route path="quizzes" element={<MyQuizzesPage />} />
             <Route path="results" element={<QuizResultsPage />} />
-
+<Route path="profile" element={<ProfilePage />} />
             <Route path="quiz/:quizId" element={<QuizAttemptPage />} />
           </Route>
         </Route>

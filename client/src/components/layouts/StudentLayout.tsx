@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
@@ -22,7 +21,11 @@ const navigation = [
   { label: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
   { label: "Browse Courses", path: "/student/courses", icon: Compass },
   { label: "My Courses", path: "/student/my-courses", icon: BookOpen },
-  { label: "Learning Progress", path: "/student/progress", icon: ChartNoAxesColumnIncreasing },
+  {
+    label: "Learning Progress",
+    path: "/student/progress",
+    icon: ChartNoAxesColumnIncreasing,
+  },
   { label: "My Quizzes", path: "/student/quizzes", icon: ClipboardList },
   { label: "Quiz Results", path: "/student/results", icon: Trophy },
 ];
@@ -66,10 +69,14 @@ function StudentLayout() {
             <Bell size={21} />
           </button>
 
-          <div className="hidden items-center gap-3 sm:flex">
+          <NavLink
+            to="/student/profile"
+            className="hidden items-center gap-3 rounded-lg p-1 transition hover:bg-emerald-50 sm:flex"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-800 text-white">
               <UserCircle size={22} />
             </div>
+
             <div className="max-w-[150px]">
               <p className="truncate text-sm font-semibold">
                 {user?.fullName || "Student"}
@@ -78,7 +85,7 @@ function StudentLayout() {
                 {user?.role || "Student"}
               </p>
             </div>
-          </div>
+          </NavLink>
 
           <button
             type="button"

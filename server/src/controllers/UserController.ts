@@ -6,8 +6,22 @@ import {
   updateUser,
   deactivateUser,
   activateUser,
+  changeMyPassword
 } from "../services/UserService";
+
+import {
+  getMyProfile,
+  updateMyProfile,
+} from "../services/UserService";
+
 import { UserRole, UserStatus } from "../entities/User";
+
+const isValidIndianMobileNumber = (mobileNumber: unknown): boolean => {
+  return (
+    typeof mobileNumber === "string" &&
+    /^[6-9][0-9]{9}$/.test(mobileNumber)
+  );
+};
 
 export const addUser = async (req: Request, res: Response) => {
   try {
@@ -27,6 +41,13 @@ export const addUser = async (req: Request, res: Response) => {
         message: "All required fields must be provided",
       });
     }
+
+    if (!isValidIndianMobileNumber(mobileNumber)) {
+  return res.status(400).json({
+    success: false,
+    message: "Enter a valid 10-digit Indian mobile number",
+  });
+}
 
     if (
   roleIds !== undefined &&
@@ -57,6 +78,16 @@ export const addUser = async (req: Request, res: Response) => {
   profileImage,
   roleIds,
 });
+
+if (
+  mobileNumber !== undefined &&
+  !isValidIndianMobileNumber(mobileNumber)
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Enter a valid 10-digit Indian mobile number",
+  });
+}
     const { password: _, ...safeUser } = user;
 
     return res.status(201).json({
@@ -226,6 +257,190 @@ export const enableUser = async (req: Request, res: Response) => {
     return res.status(404).json({
       success: false,
       message: "Failed to activate user",
+    });
+  }
+};
+
+export const fetchMyProfile = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const user = await getMyProfile(req.user.id);
+    const { password, ...safeUser } = user;
+
+    return res.status(200).json({
+      success: true,
+      data: safeUser,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch profile";
+
+    return res.status(message === "User not found" ? 404 : 500).json({
+      success: false,
+      message,
+    });
+  }
+};
+
+export const editMyProfile = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const { fullName, mobileNumber, profileImage } = req.body;
+
+    if (
+      fullName === undefined &&
+      mobileNumber === undefined &&
+      profileImage === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one profile field is required",
+      });
+    }
+
+    if (
+      fullName !== undefined &&
+      (typeof fullName !== "string" ||
+        fullName.trim().length < 3 ||
+        fullName.trim().length > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must contain 3 to 100 characters",
+      });
+    }
+
+    if (
+      mobileNumber !== undefined &&
+      !isValidIndianMobileNumber(mobileNumber)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid 10-digit Indian mobile number",
+      });
+    }
+
+    if (
+      profileImage !== undefined &&
+      profileImage !== null &&
+      typeof profileImage !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid profile image",
+      });
+    }
+
+    const user = await updateMyProfile(req.user.id, {
+      fullName:
+        fullName !== undefined ? fullName.trim() : undefined,
+      mobileNumber,
+      profileImage,
+    });
+
+    const { password, ...safeUser } = user;
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: safeUser,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Profile update failed";
+
+    return res.status(message === "User not found" ? 404 : 500).json({
+      success: false,
+      message,
+    });
+  }
+};
+
+export const changeMyPasswordController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All password fields are required",
+      });
+    }
+
+    if (typeof currentPassword !== "string" ||
+        typeof newPassword !== "string" ||
+        typeof confirmPassword !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid password input",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    await changeMyPassword(
+      req.user.id,
+      currentPassword,
+      newPassword
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error: any) {
+    const message = error.message || "Failed to change password";
+
+    const statusCode =
+      message === "User not found" ? 404 :
+      message === "Current password is incorrect" ||
+      message === "New password must be different from current password"
+        ? 400
+        : 500;
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
     });
   }
 };

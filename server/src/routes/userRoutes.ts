@@ -1,12 +1,38 @@
 import { Router } from "express";
 import {
-  addUser,fetchAllUsers,editUser,disableUser, } from "../controllers/UserController";
+  addUser,
+  fetchAllUsers,
+  editUser,
+  disableUser,
+  enableUser,
+  fetchMyProfile,
+  editMyProfile,
+  changeMyPasswordController
+} from "../controllers/UserController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { authorizeRoles } from "../middlewares/authorizeRoles";
 import { UserRole } from "../entities/User";
-import { enableUser } from "../controllers/UserController";
 
 const router = Router();
+
+router.patch(
+  "/me/change-password",
+  authMiddleware,
+  changeMyPasswordController
+);
+
+// Logged-in user's profile
+router.get(
+  "/me",
+  authMiddleware,
+  fetchMyProfile
+);
+
+router.put(
+  "/me",
+  authMiddleware,
+  editMyProfile
+);
 
 router.post(
   "/",

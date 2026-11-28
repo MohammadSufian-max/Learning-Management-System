@@ -199,3 +199,100 @@ export const activateUser = async (id: number) => {
 
   return await userRepository.save(user);
 };
+
+
+export const getMyProfile = async (userId: number) => {
+  const userRepository = AppDataSource.getRepository(User);
+
+  const user = await userRepository.findOne({
+    where: { id: userId },
+    relations: {
+      roles: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
+
+export const updateMyProfile = async (
+  userId: number,
+  data: {
+    fullName?: string;
+    mobileNumber?: string;
+    profileImage?: string | null;
+  }
+) => {
+  const userRepository = AppDataSource.getRepository(User);
+
+  const user = await userRepository.findOne({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (data.fullName !== undefined) {
+    user.fullName = data.fullName;
+  }
+
+  if (data.mobileNumber !== undefined) {
+    user.mobileNumber = data.mobileNumber;
+  }
+
+  if (data.profileImage !== undefined) {
+    user.profileImage = data.profileImage;
+  }
+
+  return await userRepository.save(user);
+};
+
+export const changeMyPassword = async (
+  userId: number,
+  currentPassword: string,
+  newPassword: string
+) => {
+  const userRepository = AppDataSource.getRepository(User);
+
+  const user = await userRepository
+  .createQueryBuilder("user")
+  .addSelect("user.password")
+  .where("user.id = :userId", { userId })
+  .getOne();
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isPasswordValid = await bcrypt.compare(
+    currentPassword,
+    user.password
+  );
+
+  if (!isPasswordValid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  if (!user.password) {
+  throw new Error("Password hash not found");
+}
+
+  const isSamePassword = await bcrypt.compare(
+    newPassword,
+    user.password
+  );
+
+  if (isSamePassword) {
+    throw new Error("New password must be different from current password");
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
+
+  await userRepository.save(user);
+
+  return true;
+};

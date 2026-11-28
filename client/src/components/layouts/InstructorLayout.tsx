@@ -65,19 +65,23 @@ function InstructorLayout() {
             <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
 
-          <div className="hidden items-center gap-3 sm:flex">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-800 text-white">
-              <UserCircle className="h-6 w-6" />
-            </div>
-            <div className="max-w-[150px]">
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {user?.fullName || "Instructor"}
-              </p>
-              <p className="text-xs capitalize text-slate-500">
-                {user?.role || "Instructor"}
-              </p>
-            </div>
-          </div>
+          <NavLink
+  to="/instructor/profile"
+  className="hidden items-center gap-3 rounded-lg p-1 transition hover:bg-emerald-50 sm:flex"
+>
+  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-800 text-white">
+    <UserCircle className="h-6 w-6" />
+  </div>
+
+  <div className="max-w-[150px]">
+    <p className="truncate text-sm font-semibold text-slate-900">
+      {user?.fullName || "Instructor"}
+    </p>
+    <p className="text-xs capitalize text-slate-500">
+      {user?.role || "Instructor"}
+    </p>
+  </div>
+</NavLink>
 
           <button
             type="button"
