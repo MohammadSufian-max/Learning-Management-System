@@ -249,27 +249,44 @@ function UserForm({
             )}
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-slate-700">
-              Mobile Number *
-            </label>
-            <input
-              {...register("mobileNumber", {
-                required: "Mobile number is required",
-                maxLength: {
-                  value: 20,
-                  message: "Maximum 20 characters",
-                },
-              })}
-              className={inputClass}
-              placeholder="Enter mobile number"
-            />
-            {errors.mobileNumber && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.mobileNumber.message}
-              </p>
-            )}
-          </div>
+          
+<div>
+  <label className="text-sm font-medium text-slate-700">
+    Mobile Number *
+  </label>
+
+  <div className="mt-1.5 flex overflow-hidden rounded-lg border border-slate-200 focus-within:border-emerald-600">
+    <span className="flex items-center border-r border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+      +91
+    </span>
+
+    <input
+      type="tel"
+      inputMode="numeric"
+      autoComplete="tel-national"
+      maxLength={10}
+      {...register("mobileNumber", {
+        required: "Mobile number is required",
+        pattern: {
+          value: /^[6-9][0-9]{9}$/,
+          message: "Enter a valid 10-digit Indian mobile number",
+        },
+        onChange: (event) => {
+          event.target.value = event.target.value.replace(/\D/g, "").slice(0, 10);
+        },
+      })}
+      className="w-full px-3 py-2.5 text-sm outline-none"
+      placeholder="Enter 10-digit mobile number"
+    />
+  </div>
+
+  {errors.mobileNumber && (
+    <p className="mt-1 text-xs text-red-600">
+      {errors.mobileNumber.message}
+    </p>
+  )}
+</div>
+
 
           {!user && (
             <div>
